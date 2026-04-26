@@ -620,9 +620,7 @@ class _UserDashboardState extends State<UserDashboard> {
             .toList()
         : const [];
     final contentList = isQaSection
-        ? rawContentList
-            .where((content) => !content.id.startsWith('content_qa_user_'))
-            .toList()
+        ? const []
         : rawContentList;
 
     if (contentList.isEmpty && !isQaSection) {
@@ -667,9 +665,7 @@ class _UserDashboardState extends State<UserDashboard> {
         );
       }
 
-      contentWidgets.add(
-        _buildQuestionInputForm(context),
-      );
+      contentWidgets.add(_buildFullWidthQuestionInputForm(context));
     }
 
     if (!isDesktop) {
@@ -746,6 +742,17 @@ class _UserDashboardState extends State<UserDashboard> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFullWidthQuestionInputForm(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: _buildQuestionInputForm(context),
+        );
+      },
     );
   }
 
