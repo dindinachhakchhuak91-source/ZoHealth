@@ -33,6 +33,7 @@ class _UserDashboardState extends State<UserDashboard> {
   final TextEditingController _recentFoodController = TextEditingController();
   String? _selectedGender;
   String? _selectedEatingWindow;
+  bool _showOtherUserQuestions = false;
   int _currentTabIndex = 0;
   final PageController _mobileAdsController = PageController();
   final PageController _desktopAdsController =
@@ -610,10 +611,21 @@ class _UserDashboardState extends State<UserDashboard> {
       return _buildEmptyCard('Section not found.');
     }
 
-    final contentList =
+    final rawContentList =
         contentProvider.getContentListForSection(selectedSectionId);
+    final isQaSection = selectedSectionTitle == 'Q&A';
+    final otherUserQuestions = isQaSection
+        ? rawContentList
+            .where((content) => content.id.startsWith('content_qa_user_'))
+            .toList()
+        : const [];
+    final contentList = isQaSection
+        ? rawContentList
+            .where((content) => !content.id.startsWith('content_qa_user_'))
+            .toList()
+        : rawContentList;
 
-    if (contentList.isEmpty) {
+    if (contentList.isEmpty && !isQaSection) {
       return _buildEmptyCard('No content available for this section yet.');
     }
 
@@ -632,7 +644,29 @@ class _UserDashboardState extends State<UserDashboard> {
         )
         .toList();
 
-    if (selectedSectionTitle == 'Q&A') {
+    if (isQaSection) {
+      if (otherUserQuestions.isNotEmpty) {
+        contentWidgets.add(
+          _buildOtherUserQuestionsButton(context),
+        );
+      }
+
+      if (_showOtherUserQuestions) {
+        contentWidgets.addAll(
+          otherUserQuestions.map<Widget>(
+            (content) => ExpandableContentBox(
+              title: content.title,
+              description: content.description,
+              bulletPoints: content.bulletPoints,
+              backgroundColor: content.backgroundColor,
+              imageUrl: content.imageUrl,
+              imageAspectRatio: content.imageAspectRatio,
+              imageDisplayHeight: content.imageDisplayHeight,
+            ),
+          ),
+        );
+      }
+
       contentWidgets.add(
         _buildQuestionInputForm(context),
       );
@@ -669,6 +703,49 @@ class _UserDashboardState extends State<UserDashboard> {
               .toList(),
         );
       },
+    );
+  }
+
+  Widget _buildOtherUserQuestionsButton(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          setState(() {
+            _showOtherUserQuestions = !_showOtherUserQuestions;
+          });
+        },
+        icon: Icon(
+          _showOtherUserQuestions
+              ? Icons.visibility_off_outlined
+              : Icons.people_alt_outlined,
+          size: 18,
+        ),
+        label: Text(
+          _showOtherUserQuestions
+              ? 'Hide Other User\'s Question'
+              : 'Other User\'s Question',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: isDark ? Colors.white : const Color(0xFF1563A7),
+          backgroundColor:
+              isDark ? const Color(0xFF162231) : const Color(0xFFF4F9FF),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF2A3A4E) : const Color(0xFFB7D4F2),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
     );
   }
 
